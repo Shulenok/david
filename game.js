@@ -29,7 +29,7 @@
   const BASE_SPEED = 430;
   const MAX_SPEED = 1060;
   const ILYA_IMAGE_SRC = "./_source/ilja.png";
-  const FACE_IMAGE_SRC = "./_source/einstein-face.jpg";
+  const FACE_IMAGE_SRC = "./_source/mellstroy-face.jpg";
   const MAXIMA_TEXT = "\u041c\u0410\u041a\u0421\u0418\u041c\u0410";
   const FART_BOOST = {
     minImpulse: 1800,
@@ -1363,12 +1363,22 @@
     ctx.clip();
 
     if (faceImageReady) {
-      // Crop the portrait to the head area and draw only the face disk.
-      const sx = 560;
-      const sy = 360;
-      const sw = 2120;
-      const sh = 2120;
-      ctx.drawImage(faceImage, sx, sy, sw, sh, -r, -r, r * 2, r * 2);
+      // Auto-crop to a square from the most face-friendly region.
+      const srcW = faceImage.naturalWidth || faceImage.width;
+      const srcH = faceImage.naturalHeight || faceImage.height;
+      if (srcW > 0 && srcH > 0) {
+        let sx = 0;
+        let sy = 0;
+        let crop = 0;
+        if (srcW >= srcH) {
+          crop = srcH;
+          sx = (srcW - crop) * 0.5;
+        } else {
+          crop = srcW;
+          sy = clamp((srcH - crop) * 0.14, 0, srcH - crop);
+        }
+        ctx.drawImage(faceImage, sx, sy, crop, crop, -r, -r, r * 2, r * 2);
+      }
     } else {
       ctx.fillStyle = "#c8c8c8";
       ctx.fillRect(-r, -r, r * 2, r * 2);
