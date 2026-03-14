@@ -30,7 +30,7 @@
   const shopPackBtn = document.getElementById("shopPack");
   const menuHintEl = document.getElementById("menuHint");
 
-  const WIDTH = 1200;
+  const WIDTH = 1280;
   const HEIGHT = 720;
   const GROUND_Y = 560;
   const BEST_KEY = "dino-best-v2";
