@@ -29,6 +29,7 @@
   const BASE_SPEED = 430;
   const MAX_SPEED = 1060;
   const ILYA_IMAGE_SRC = "./_source/ilja.png";
+  const DAVID_IMAGE_SRC = "./_source/david.png";
   const FACE_IMAGE_SRC = "./_source/mellstroy-face.jpg";
   const MAXIMA_TEXT = "\u041c\u0410\u041a\u0421\u0418\u041c\u0410";
   const FART_BOOST = {
@@ -84,6 +85,16 @@
     faceImageReady = false;
   });
   faceImage.src = FACE_IMAGE_SRC;
+
+  const davidImage = new Image();
+  let davidImageReady = false;
+  davidImage.addEventListener("load", () => {
+    davidImageReady = true;
+  });
+  davidImage.addEventListener("error", () => {
+    davidImageReady = false;
+  });
+  davidImage.src = DAVID_IMAGE_SRC;
 
   const audio = {
     ctx: null,
@@ -1641,6 +1652,24 @@
       ctx.font = "700 56px Segoe UI";
       ctx.textAlign = "center";
       ctx.fillText("GAME OVER", WIDTH / 2, HEIGHT * 0.22);
+
+      if (davidImageReady) {
+        const maxW = 360;
+        const maxH = 360;
+        const srcW = davidImage.naturalWidth || davidImage.width;
+        const srcH = davidImage.naturalHeight || davidImage.height;
+        if (srcW > 0 && srcH > 0) {
+          const scale = Math.min(maxW / srcW, maxH / srcH);
+          const drawW = srcW * scale;
+          const drawH = srcH * scale;
+          const drawX = (WIDTH - drawW) * 0.5;
+          const drawY = HEIGHT * 0.28;
+
+          ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+          ctx.fillRect(drawX - 14, drawY - 14, drawW + 28, drawH + 28);
+          ctx.drawImage(davidImage, drawX, drawY, drawW, drawH);
+        }
+      }
       ctx.textAlign = "start";
     }
   }
