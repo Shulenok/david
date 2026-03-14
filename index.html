@@ -1,0 +1,32 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ilya Runner</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="header">
+        <h1>Ilya Runner</h1>
+        <div class="hud">
+          <span>Score: <b id="score">0</b></span>
+          <span>Best: <b id="best">0</b></span>
+          <span>Faces: <b id="faces">0</b></span>
+        </div>
+      </header>
+      <canvas id="game" width="1200" height="720" aria-label="Ilya runner game area"></canvas>
+      <div class="controls">
+        <p id="status">Space/Right Mouse jump x2, F boost jump, Shift/E nitro, S stop, R restart.</p>
+        <div class="action-buttons">
+          <button id="boost" type="button">Boost Jump (F)</button>
+          <button id="nitro" type="button">Nitro (Shift)</button>
+          <button id="stop" type="button">Stop (S)</button>
+          <button id="restart" type="button">Restart</button>
+        </div>
+      </div>
+    </main>
+    <script src="./game.js"></script>
+  </body>
+</html>
