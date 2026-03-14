@@ -14,3 +14,8 @@ Open the game here:
 - `Shift` or `E`: nitro
 - `S`: stop
 - `R`: restart
+
+## Audio
+
+- Funny cartoon-style SFX are loaded from local files in `_source/sfx/`.
+- Source and license details: `CREDITS.md`.

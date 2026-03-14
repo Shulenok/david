@@ -52,6 +52,18 @@
     cooldown: 0.9,
     speedFactor: 0.2,
   };
+  const SAMPLE_SOUNDS = {
+    jumpMain: "./_source/sfx/jump_main.ogg",
+    jumpDouble: "./_source/sfx/jump_double.ogg",
+    boostFunny: "./_source/sfx/boost_funny.ogg",
+    nitroFunny: "./_source/sfx/nitro_funny.ogg",
+    stopFunny: "./_source/sfx/stop_funny.ogg",
+    scoreTick: "./_source/sfx/score_tick.ogg",
+    faceJump: "./_source/sfx/face_jump.ogg",
+    nearMiss: "./_source/sfx/near_miss.ogg",
+    gameOver: "./_source/sfx/game_over.ogg",
+    restart: "./_source/sfx/restart.ogg",
+  };
 
   const ilyaImage = new Image();
   let ilyaImageReady = false;
@@ -77,6 +89,8 @@
     ctx: null,
     master: null,
     unlocked: false,
+    sampleLoadStarted: false,
+    sampleBuffers: {},
   };
 
   function ensureAudio() {
@@ -97,6 +111,62 @@
       ctx.resume();
     }
     audio.unlocked = true;
+    preloadSamples();
+  }
+
+  async function preloadSamples() {
+    if (audio.sampleLoadStarted) return;
+    const ctx = ensureAudio();
+    if (!ctx) return;
+    audio.sampleLoadStarted = true;
+
+    const entries = Object.entries(SAMPLE_SOUNDS);
+    await Promise.all(entries.map(async ([name, src]) => {
+      try {
+        const response = await fetch(src, { cache: "force-cache" });
+        if (!response.ok) return;
+        const raw = await response.arrayBuffer();
+        const decoded = await ctx.decodeAudioData(raw.slice(0));
+        audio.sampleBuffers[name] = decoded;
+      } catch (error) {
+        // Keep gameplay smooth even if a sample fails to load.
+        console.warn("Failed to load sample:", name, error);
+      }
+    }));
+  }
+
+  function playSample(name, config = {}) {
+    const ctx = ensureAudio();
+    if (!ctx || !audio.master || !audio.unlocked) return false;
+    const buffer = audio.sampleBuffers[name];
+    if (!buffer) return false;
+
+    const when = ctx.currentTime + (config.delay || 0);
+    const rate = config.rate || 1;
+    const volume = config.volume === undefined ? 0.9 : config.volume;
+    const maxOffset = Math.max(0, buffer.duration - 0.02);
+    const offset = Math.min(Math.max(0, config.offset || 0), maxOffset);
+    let duration = config.duration;
+
+    if (duration !== undefined) {
+      duration = Math.min(Math.max(0.02, duration), buffer.duration - offset);
+    }
+
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.playbackRate.setValueAtTime(rate, when);
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(volume, when);
+
+    source.connect(gain);
+    gain.connect(audio.master);
+    if (duration !== undefined) {
+      source.start(when, offset, duration);
+    } else {
+      source.start(when, offset);
+    }
+    return true;
   }
 
   function playTone(config) {
@@ -202,61 +272,104 @@
   }
 
   function sfxJump(primary) {
-    if (primary) {
-      playWobble({ type: "triangle", base: 300, depth: 70, speed: 18, duration: 0.13, volume: 0.13 });
-      playTone({ type: "sine", freq: 420, slideTo: 760, duration: 0.08, volume: 0.08, delay: 0.01 });
-    } else {
-      playWobble({ type: "square", base: 520, depth: 120, speed: 26, duration: 0.1, volume: 0.1 });
-      playTone({ type: "triangle", freq: 690, slideTo: 980, duration: 0.08, volume: 0.08, delay: 0.012 });
+    const played = primary
+      ? playSample("jumpMain", { volume: 0.95, rate: 1.08 })
+      : playSample("jumpDouble", { volume: 0.95, rate: 1.17 });
+    if (!played) {
+      if (primary) {
+        playWobble({ type: "triangle", base: 300, depth: 70, speed: 18, duration: 0.13, volume: 0.13 });
+        playTone({ type: "sine", freq: 420, slideTo: 760, duration: 0.08, volume: 0.08, delay: 0.01 });
+      } else {
+        playWobble({ type: "square", base: 520, depth: 120, speed: 26, duration: 0.1, volume: 0.1 });
+        playTone({ type: "triangle", freq: 690, slideTo: 980, duration: 0.08, volume: 0.08, delay: 0.012 });
+      }
+      return;
     }
+    playTone({ type: "triangle", freq: primary ? 760 : 920, slideTo: primary ? 980 : 1160, duration: 0.04, volume: 0.03 });
   }
 
   function sfxBoost() {
-    // Cartoon "pffff-boing"
-    playNoise({ duration: 0.22, volume: 0.12, lowpass: 820 });
-    playWobble({ type: "triangle", base: 180, depth: 80, speed: 14, duration: 0.2, volume: 0.1, delay: 0.01 });
-    playTone({ type: "sine", freq: 180, slideTo: 480, duration: 0.24, volume: 0.09, delay: 0.03 });
+    const played = playSample("boostFunny", { volume: 0.98, rate: 1.2, offset: 0.08, duration: 0.72 });
+    if (!played) {
+      playNoise({ duration: 0.22, volume: 0.12, lowpass: 820 });
+      playWobble({ type: "triangle", base: 180, depth: 80, speed: 14, duration: 0.2, volume: 0.1, delay: 0.01 });
+      playTone({ type: "sine", freq: 180, slideTo: 480, duration: 0.24, volume: 0.09, delay: 0.03 });
+      return;
+    }
+    playNoise({ duration: 0.1, volume: 0.04, lowpass: 1000 });
   }
 
   function sfxNitro() {
-    playNoise({ duration: 0.09, volume: 0.05, lowpass: 4200 });
-    playTone({ type: "sawtooth", freq: 320, slideTo: 1260, duration: 0.16, volume: 0.12 });
-    playTone({ type: "square", freq: 760, slideTo: 1320, duration: 0.1, volume: 0.08, delay: 0.03 });
-    playWobble({ type: "triangle", base: 540, depth: 60, speed: 24, duration: 0.1, volume: 0.06, delay: 0.02 });
+    const played = playSample("nitroFunny", { volume: 0.95, rate: 1.28 });
+    if (!played) {
+      playNoise({ duration: 0.09, volume: 0.05, lowpass: 4200 });
+      playTone({ type: "sawtooth", freq: 320, slideTo: 1260, duration: 0.16, volume: 0.12 });
+      playTone({ type: "square", freq: 760, slideTo: 1320, duration: 0.1, volume: 0.08, delay: 0.03 });
+      playWobble({ type: "triangle", base: 540, depth: 60, speed: 24, duration: 0.1, volume: 0.06, delay: 0.02 });
+      return;
+    }
+    playTone({ type: "square", freq: 780, slideTo: 1260, duration: 0.08, volume: 0.05, delay: 0.01 });
   }
 
   function sfxStop() {
-    // Tiny sad trombone
-    playTone({ type: "sawtooth", freq: 300, slideTo: 170, duration: 0.15, volume: 0.12 });
-    playTone({ type: "triangle", freq: 240, slideTo: 110, duration: 0.2, volume: 0.1, delay: 0.04 });
-    playWobble({ type: "sine", base: 120, depth: 22, speed: 10, duration: 0.18, volume: 0.05, delay: 0.05 });
+    const played = playSample("stopFunny", { volume: 0.92, rate: 0.95 });
+    if (!played) {
+      playTone({ type: "sawtooth", freq: 300, slideTo: 170, duration: 0.15, volume: 0.12 });
+      playTone({ type: "triangle", freq: 240, slideTo: 110, duration: 0.2, volume: 0.1, delay: 0.04 });
+      playWobble({ type: "sine", base: 120, depth: 22, speed: 10, duration: 0.18, volume: 0.05, delay: 0.05 });
+      return;
+    }
+    playTone({ type: "sine", freq: 240, slideTo: 120, duration: 0.12, volume: 0.03, delay: 0.01 });
   }
 
   function sfxScoreTick() {
-    playTone({ type: "square", freq: 900, slideTo: 1120, duration: 0.05, volume: 0.06 });
+    const played = playSample("scoreTick", { volume: 0.45, rate: 1.2, duration: 0.09 });
+    if (!played) {
+      playTone({ type: "square", freq: 900, slideTo: 1120, duration: 0.05, volume: 0.06 });
+    }
   }
 
   function sfxFaceJumped() {
-    playTone({ type: "square", freq: 560, slideTo: 930, duration: 0.07, volume: 0.1 });
-    playTone({ type: "square", freq: 820, slideTo: 1190, duration: 0.06, volume: 0.08, delay: 0.05 });
-    playWobble({ type: "sine", base: 760, depth: 45, speed: 30, duration: 0.06, volume: 0.05, delay: 0.03 });
+    const played = playSample("faceJump", { volume: 0.88, rate: 1.12 });
+    if (!played) {
+      playTone({ type: "square", freq: 560, slideTo: 930, duration: 0.07, volume: 0.1 });
+      playTone({ type: "square", freq: 820, slideTo: 1190, duration: 0.06, volume: 0.08, delay: 0.05 });
+      playWobble({ type: "sine", base: 760, depth: 45, speed: 30, duration: 0.06, volume: 0.05, delay: 0.03 });
+      return;
+    }
+    playTone({ type: "sine", freq: 980, slideTo: 1220, duration: 0.05, volume: 0.03, delay: 0.01 });
   }
 
   function sfxNearMiss() {
-    playNoise({ duration: 0.24, volume: 0.07, lowpass: 1200 });
-    playWobble({ type: "triangle", base: 240, depth: 130, speed: 34, duration: 0.2, volume: 0.11 });
-    playTone({ type: "sine", freq: 420, slideTo: 180, duration: 0.21, volume: 0.05 });
+    const played = playSample("nearMiss", { volume: 0.88, rate: 1.16, duration: 0.24 });
+    if (!played) {
+      playNoise({ duration: 0.24, volume: 0.07, lowpass: 1200 });
+      playWobble({ type: "triangle", base: 240, depth: 130, speed: 34, duration: 0.2, volume: 0.11 });
+      playTone({ type: "sine", freq: 420, slideTo: 180, duration: 0.21, volume: 0.05 });
+      return;
+    }
+    playNoise({ duration: 0.08, volume: 0.04, lowpass: 1300 });
   }
 
   function sfxGameOver() {
-    playTone({ type: "sawtooth", freq: 430, slideTo: 190, duration: 0.2, volume: 0.12 });
-    playWobble({ type: "triangle", base: 190, depth: 80, speed: 9, duration: 0.28, volume: 0.08, delay: 0.05 });
-    playNoise({ duration: 0.16, volume: 0.04, lowpass: 600, delay: 0.02 });
+    const played = playSample("gameOver", { volume: 0.95, rate: 0.95, offset: 0.03, duration: 0.8 });
+    if (!played) {
+      playTone({ type: "sawtooth", freq: 430, slideTo: 190, duration: 0.2, volume: 0.12 });
+      playWobble({ type: "triangle", base: 190, depth: 80, speed: 9, duration: 0.28, volume: 0.08, delay: 0.05 });
+      playNoise({ duration: 0.16, volume: 0.04, lowpass: 600, delay: 0.02 });
+      return;
+    }
+    playTone({ type: "triangle", freq: 220, slideTo: 120, duration: 0.18, volume: 0.03, delay: 0.06 });
   }
 
   function sfxRestart() {
-    playTone({ type: "square", freq: 540, slideTo: 920, duration: 0.08, volume: 0.09 });
-    playTone({ type: "triangle", freq: 700, slideTo: 1180, duration: 0.06, volume: 0.07, delay: 0.04 });
+    const played = playSample("restart", { volume: 0.7, rate: 1.18, duration: 0.22 });
+    if (!played) {
+      playTone({ type: "square", freq: 540, slideTo: 920, duration: 0.08, volume: 0.09 });
+      playTone({ type: "triangle", freq: 700, slideTo: 1180, duration: 0.06, volume: 0.07, delay: 0.04 });
+      return;
+    }
+    playTone({ type: "triangle", freq: 860, slideTo: 1180, duration: 0.05, volume: 0.03, delay: 0.01 });
   }
 
   function clamp(value, min, max) {
