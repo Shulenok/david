@@ -1652,10 +1652,10 @@
         const srcW = davidImage.naturalWidth || davidImage.width;
         const srcH = davidImage.naturalHeight || davidImage.height;
         if (srcW > 0 && srcH > 0) {
-          const scale = Math.max(WIDTH / srcW, HEIGHT / srcH) * 0.85;
+          const scale = Math.max(WIDTH / srcW, HEIGHT / srcH) * 0.82;
           const drawW = srcW * scale;
           const drawH = srcH * scale;
-          const drawX = WIDTH - drawW;
+          const drawX = WIDTH - drawW - 36;
           const drawY = HEIGHT - drawH;
           ctx.drawImage(davidImage, drawX, drawY, drawW, drawH);
         }
