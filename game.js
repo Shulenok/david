@@ -130,6 +130,44 @@
     osc.stop(when + duration + release + 0.02);
   }
 
+  function playWobble(config) {
+    const ctx = ensureAudio();
+    if (!ctx || !audio.master || !audio.unlocked) return;
+
+    const base = config.base || 220;
+    const depth = config.depth || 90;
+    const speed = config.speed || 22;
+    const duration = config.duration || 0.18;
+    const volume = config.volume || 0.13;
+    const when = ctx.currentTime + (config.delay || 0);
+
+    const osc = ctx.createOscillator();
+    const lfo = ctx.createOscillator();
+    const lfoGain = ctx.createGain();
+    const gain = ctx.createGain();
+
+    osc.type = config.type || "triangle";
+    osc.frequency.setValueAtTime(base, when);
+
+    lfo.type = "sine";
+    lfo.frequency.setValueAtTime(speed, when);
+    lfoGain.gain.setValueAtTime(depth, when);
+
+    gain.gain.setValueAtTime(0.0001, when);
+    gain.gain.linearRampToValueAtTime(volume, when + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + duration + 0.06);
+
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc.frequency);
+    osc.connect(gain);
+    gain.connect(audio.master);
+
+    osc.start(when);
+    lfo.start(when);
+    osc.stop(when + duration + 0.08);
+    lfo.stop(when + duration + 0.08);
+  }
+
   function playNoise(config) {
     const ctx = ensureAudio();
     if (!ctx || !audio.master || !audio.unlocked) return;
@@ -165,47 +203,60 @@
 
   function sfxJump(primary) {
     if (primary) {
-      playTone({ type: "triangle", freq: 330, slideTo: 520, duration: 0.11, volume: 0.15 });
+      playWobble({ type: "triangle", base: 300, depth: 70, speed: 18, duration: 0.13, volume: 0.13 });
+      playTone({ type: "sine", freq: 420, slideTo: 760, duration: 0.08, volume: 0.08, delay: 0.01 });
     } else {
-      playTone({ type: "sawtooth", freq: 430, slideTo: 710, duration: 0.09, volume: 0.12 });
+      playWobble({ type: "square", base: 520, depth: 120, speed: 26, duration: 0.1, volume: 0.1 });
+      playTone({ type: "triangle", freq: 690, slideTo: 980, duration: 0.08, volume: 0.08, delay: 0.012 });
     }
   }
 
   function sfxBoost() {
-    playNoise({ duration: 0.18, volume: 0.11, lowpass: 1000 });
-    playTone({ type: "square", freq: 220, slideTo: 430, duration: 0.2, volume: 0.12 });
+    // Cartoon "pffff-boing"
+    playNoise({ duration: 0.22, volume: 0.12, lowpass: 820 });
+    playWobble({ type: "triangle", base: 180, depth: 80, speed: 14, duration: 0.2, volume: 0.1, delay: 0.01 });
+    playTone({ type: "sine", freq: 180, slideTo: 480, duration: 0.24, volume: 0.09, delay: 0.03 });
   }
 
   function sfxNitro() {
-    playTone({ type: "sawtooth", freq: 470, slideTo: 860, duration: 0.1, volume: 0.14 });
-    playTone({ type: "triangle", freq: 680, slideTo: 1120, duration: 0.08, volume: 0.11, delay: 0.04 });
+    playNoise({ duration: 0.09, volume: 0.05, lowpass: 4200 });
+    playTone({ type: "sawtooth", freq: 320, slideTo: 1260, duration: 0.16, volume: 0.12 });
+    playTone({ type: "square", freq: 760, slideTo: 1320, duration: 0.1, volume: 0.08, delay: 0.03 });
+    playWobble({ type: "triangle", base: 540, depth: 60, speed: 24, duration: 0.1, volume: 0.06, delay: 0.02 });
   }
 
   function sfxStop() {
-    playTone({ type: "square", freq: 250, slideTo: 90, duration: 0.16, volume: 0.16 });
+    // Tiny sad trombone
+    playTone({ type: "sawtooth", freq: 300, slideTo: 170, duration: 0.15, volume: 0.12 });
+    playTone({ type: "triangle", freq: 240, slideTo: 110, duration: 0.2, volume: 0.1, delay: 0.04 });
+    playWobble({ type: "sine", base: 120, depth: 22, speed: 10, duration: 0.18, volume: 0.05, delay: 0.05 });
   }
 
   function sfxScoreTick() {
-    playTone({ type: "triangle", freq: 760, slideTo: 980, duration: 0.06, volume: 0.1 });
+    playTone({ type: "square", freq: 900, slideTo: 1120, duration: 0.05, volume: 0.06 });
   }
 
   function sfxFaceJumped() {
-    playTone({ type: "triangle", freq: 540, slideTo: 760, duration: 0.07, volume: 0.12 });
-    playTone({ type: "triangle", freq: 700, slideTo: 980, duration: 0.06, volume: 0.1, delay: 0.05 });
+    playTone({ type: "square", freq: 560, slideTo: 930, duration: 0.07, volume: 0.1 });
+    playTone({ type: "square", freq: 820, slideTo: 1190, duration: 0.06, volume: 0.08, delay: 0.05 });
+    playWobble({ type: "sine", base: 760, depth: 45, speed: 30, duration: 0.06, volume: 0.05, delay: 0.03 });
   }
 
   function sfxNearMiss() {
-    playTone({ type: "sawtooth", freq: 260, slideTo: 220, duration: 0.22, volume: 0.12 });
-    playNoise({ duration: 0.2, volume: 0.05, lowpass: 700 });
+    playNoise({ duration: 0.24, volume: 0.07, lowpass: 1200 });
+    playWobble({ type: "triangle", base: 240, depth: 130, speed: 34, duration: 0.2, volume: 0.11 });
+    playTone({ type: "sine", freq: 420, slideTo: 180, duration: 0.21, volume: 0.05 });
   }
 
   function sfxGameOver() {
-    playTone({ type: "square", freq: 420, slideTo: 240, duration: 0.18, volume: 0.14 });
-    playTone({ type: "triangle", freq: 260, slideTo: 120, duration: 0.26, volume: 0.12, delay: 0.09 });
+    playTone({ type: "sawtooth", freq: 430, slideTo: 190, duration: 0.2, volume: 0.12 });
+    playWobble({ type: "triangle", base: 190, depth: 80, speed: 9, duration: 0.28, volume: 0.08, delay: 0.05 });
+    playNoise({ duration: 0.16, volume: 0.04, lowpass: 600, delay: 0.02 });
   }
 
   function sfxRestart() {
-    playTone({ type: "triangle", freq: 340, slideTo: 560, duration: 0.09, volume: 0.1 });
+    playTone({ type: "square", freq: 540, slideTo: 920, duration: 0.08, volume: 0.09 });
+    playTone({ type: "triangle", freq: 700, slideTo: 1180, duration: 0.06, volume: 0.07, delay: 0.04 });
   }
 
   function clamp(value, min, max) {
