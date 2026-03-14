@@ -363,14 +363,15 @@
   }
 
   function sfxGameOver() {
-    const played = playSample("gameOver", { volume: 0.95, rate: 0.95, offset: 0.03, duration: 0.8 });
+    const played = playSample("gameOver", { volume: 1.1, rate: 0.9, offset: 0.02, duration: 0.9 });
     if (!played) {
-      playTone({ type: "sawtooth", freq: 430, slideTo: 190, duration: 0.2, volume: 0.12 });
-      playWobble({ type: "triangle", base: 190, depth: 80, speed: 9, duration: 0.28, volume: 0.08, delay: 0.05 });
-      playNoise({ duration: 0.16, volume: 0.04, lowpass: 600, delay: 0.02 });
+      playTone({ type: "sawtooth", freq: 430, slideTo: 170, duration: 0.24, volume: 0.14 });
+      playWobble({ type: "triangle", base: 175, depth: 90, speed: 8, duration: 0.32, volume: 0.1, delay: 0.04 });
+      playNoise({ duration: 0.2, volume: 0.05, lowpass: 560, delay: 0.02 });
       return;
     }
-    playTone({ type: "triangle", freq: 220, slideTo: 120, duration: 0.18, volume: 0.03, delay: 0.06 });
+    playSample("gameOver", { volume: 0.35, rate: 0.74, offset: 0.06, duration: 0.55, delay: 0.11 });
+    playTone({ type: "triangle", freq: 220, slideTo: 110, duration: 0.2, volume: 0.04, delay: 0.08 });
   }
 
   function sfxRestart() {
@@ -1651,7 +1652,7 @@
         const srcW = davidImage.naturalWidth || davidImage.width;
         const srcH = davidImage.naturalHeight || davidImage.height;
         if (srcW > 0 && srcH > 0) {
-          const scale = Math.max(WIDTH / srcW, HEIGHT / srcH) * 0.93;
+          const scale = Math.max(WIDTH / srcW, HEIGHT / srcH) * 0.85;
           const drawW = srcW * scale;
           const drawH = srcH * scale;
           const drawX = WIDTH - drawW;
@@ -1661,12 +1662,12 @@
       }
 
       ctx.fillStyle = "#ffffff";
-      ctx.font = "700 64px Segoe UI";
+      ctx.font = "700 92px Segoe UI";
       ctx.textAlign = "start";
       ctx.shadowColor = "rgba(0, 0, 0, 0.55)";
       ctx.shadowBlur = 10;
-      ctx.fillText("GAME", 38, 86);
-      ctx.fillText("OVER", 38, 156);
+      ctx.fillText("GAME", 34, 108);
+      ctx.fillText("OVER", 34, 206);
       ctx.shadowColor = "transparent";
       ctx.shadowBlur = 0;
     }
