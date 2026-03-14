@@ -1666,8 +1666,8 @@
       ctx.textAlign = "start";
       ctx.shadowColor = "rgba(0, 0, 0, 0.55)";
       ctx.shadowBlur = 10;
-      ctx.fillText("GAME", 34, 108);
-      ctx.fillText("OVER", 34, 206);
+      ctx.fillText("GAME", 12, 108);
+      ctx.fillText("OVER", 12, 206);
       ctx.shadowColor = "transparent";
       ctx.shadowBlur = 0;
     }
