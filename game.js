@@ -1647,29 +1647,31 @@
     }
 
     if (state.gameOver) {
-      const ink = mixColor("#2b2b2b", "#f1f1f1", state.nightLevel);
-      ctx.fillStyle = ink;
-      ctx.font = "700 56px Segoe UI";
-      ctx.textAlign = "center";
-      ctx.fillText("GAME OVER", WIDTH / 2, HEIGHT * 0.22);
-
       if (davidImageReady) {
-        const maxW = 360;
-        const maxH = 360;
         const srcW = davidImage.naturalWidth || davidImage.width;
         const srcH = davidImage.naturalHeight || davidImage.height;
         if (srcW > 0 && srcH > 0) {
-          const scale = Math.min(maxW / srcW, maxH / srcH);
+          const scale = Math.max(WIDTH / srcW, HEIGHT / srcH);
           const drawW = srcW * scale;
           const drawH = srcH * scale;
-          const drawX = (WIDTH - drawW) * 0.5;
-          const drawY = HEIGHT * 0.28;
-
-          ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
-          ctx.fillRect(drawX - 14, drawY - 14, drawW + 28, drawH + 28);
+          const drawX = WIDTH - drawW;
+          const drawY = HEIGHT - drawH;
           ctx.drawImage(davidImage, drawX, drawY, drawW, drawH);
         }
       }
+
+      ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+      const ink = mixColor("#ffffff", "#f1f1f1", state.nightLevel);
+      ctx.fillStyle = ink;
+      ctx.font = "700 56px Segoe UI";
+      ctx.textAlign = "center";
+      ctx.shadowColor = "rgba(0, 0, 0, 0.65)";
+      ctx.shadowBlur = 10;
+      ctx.fillText("GAME OVER", WIDTH / 2, HEIGHT * 0.22);
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
       ctx.textAlign = "start";
     }
   }
