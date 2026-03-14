@@ -1651,7 +1651,7 @@
         const srcW = davidImage.naturalWidth || davidImage.width;
         const srcH = davidImage.naturalHeight || davidImage.height;
         if (srcW > 0 && srcH > 0) {
-          const scale = Math.max(WIDTH / srcW, HEIGHT / srcH);
+          const scale = Math.max(WIDTH / srcW, HEIGHT / srcH) * 0.93;
           const drawW = srcW * scale;
           const drawH = srcH * scale;
           const drawX = WIDTH - drawW;
@@ -1660,19 +1660,15 @@
         }
       }
 
-      ctx.fillStyle = "rgba(0, 0, 0, 0.28)";
-      ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-      const ink = mixColor("#ffffff", "#f1f1f1", state.nightLevel);
-      ctx.fillStyle = ink;
-      ctx.font = "700 56px Segoe UI";
-      ctx.textAlign = "center";
-      ctx.shadowColor = "rgba(0, 0, 0, 0.65)";
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "700 64px Segoe UI";
+      ctx.textAlign = "start";
+      ctx.shadowColor = "rgba(0, 0, 0, 0.55)";
       ctx.shadowBlur = 10;
-      ctx.fillText("GAME OVER", WIDTH / 2, HEIGHT * 0.22);
+      ctx.fillText("GAME", 38, 86);
+      ctx.fillText("OVER", 38, 156);
       ctx.shadowColor = "transparent";
       ctx.shadowBlur = 0;
-      ctx.textAlign = "start";
     }
   }
 
