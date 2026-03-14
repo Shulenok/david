@@ -73,6 +73,141 @@
   });
   faceImage.src = FACE_IMAGE_SRC;
 
+  const audio = {
+    ctx: null,
+    master: null,
+    unlocked: false,
+  };
+
+  function ensureAudio() {
+    if (audio.ctx) return audio.ctx;
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return null;
+    audio.ctx = new AudioContextClass();
+    audio.master = audio.ctx.createGain();
+    audio.master.gain.value = 0.2;
+    audio.master.connect(audio.ctx.destination);
+    return audio.ctx;
+  }
+
+  function unlockAudio() {
+    const ctx = ensureAudio();
+    if (!ctx) return;
+    if (ctx.state === "suspended") {
+      ctx.resume();
+    }
+    audio.unlocked = true;
+  }
+
+  function playTone(config) {
+    const ctx = ensureAudio();
+    if (!ctx || !audio.master || !audio.unlocked) return;
+
+    const type = config.type || "sine";
+    const freq = config.freq || 440;
+    const slideTo = config.slideTo || null;
+    const duration = config.duration || 0.12;
+    const volume = config.volume || 0.16;
+    const attack = config.attack || 0.004;
+    const release = config.release || 0.07;
+    const when = ctx.currentTime + (config.delay || 0);
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, when);
+    if (slideTo) {
+      osc.frequency.exponentialRampToValueAtTime(slideTo, when + duration);
+    }
+
+    gain.gain.setValueAtTime(0.0001, when);
+    gain.gain.linearRampToValueAtTime(volume, when + attack);
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + duration + release);
+
+    osc.connect(gain);
+    gain.connect(audio.master);
+    osc.start(when);
+    osc.stop(when + duration + release + 0.02);
+  }
+
+  function playNoise(config) {
+    const ctx = ensureAudio();
+    if (!ctx || !audio.master || !audio.unlocked) return;
+
+    const duration = config.duration || 0.14;
+    const volume = config.volume || 0.08;
+    const lowpass = config.lowpass || 1800;
+    const when = ctx.currentTime + (config.delay || 0);
+    const bufferSize = Math.max(1, Math.floor(ctx.sampleRate * duration));
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i += 1) {
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = lowpass;
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(volume, when);
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + duration);
+
+    src.connect(filter);
+    filter.connect(gain);
+    gain.connect(audio.master);
+    src.start(when);
+    src.stop(when + duration + 0.02);
+  }
+
+  function sfxJump(primary) {
+    if (primary) {
+      playTone({ type: "triangle", freq: 330, slideTo: 520, duration: 0.11, volume: 0.15 });
+    } else {
+      playTone({ type: "sawtooth", freq: 430, slideTo: 710, duration: 0.09, volume: 0.12 });
+    }
+  }
+
+  function sfxBoost() {
+    playNoise({ duration: 0.18, volume: 0.11, lowpass: 1000 });
+    playTone({ type: "square", freq: 220, slideTo: 430, duration: 0.2, volume: 0.12 });
+  }
+
+  function sfxNitro() {
+    playTone({ type: "sawtooth", freq: 470, slideTo: 860, duration: 0.1, volume: 0.14 });
+    playTone({ type: "triangle", freq: 680, slideTo: 1120, duration: 0.08, volume: 0.11, delay: 0.04 });
+  }
+
+  function sfxStop() {
+    playTone({ type: "square", freq: 250, slideTo: 90, duration: 0.16, volume: 0.16 });
+  }
+
+  function sfxScoreTick() {
+    playTone({ type: "triangle", freq: 760, slideTo: 980, duration: 0.06, volume: 0.1 });
+  }
+
+  function sfxFaceJumped() {
+    playTone({ type: "triangle", freq: 540, slideTo: 760, duration: 0.07, volume: 0.12 });
+    playTone({ type: "triangle", freq: 700, slideTo: 980, duration: 0.06, volume: 0.1, delay: 0.05 });
+  }
+
+  function sfxNearMiss() {
+    playTone({ type: "sawtooth", freq: 260, slideTo: 220, duration: 0.22, volume: 0.12 });
+    playNoise({ duration: 0.2, volume: 0.05, lowpass: 700 });
+  }
+
+  function sfxGameOver() {
+    playTone({ type: "square", freq: 420, slideTo: 240, duration: 0.18, volume: 0.14 });
+    playTone({ type: "triangle", freq: 260, slideTo: 120, duration: 0.26, volume: 0.12, delay: 0.09 });
+  }
+
+  function sfxRestart() {
+    playTone({ type: "triangle", freq: 340, slideTo: 560, duration: 0.09, volume: 0.1 });
+  }
+
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
   }
@@ -540,6 +675,7 @@
     if (state.nitroTimer > 0 || state.nitroCooldown > 0) return;
     state.nitroTimer = NITRO.duration;
     state.nitroCooldown = NITRO.cooldown;
+    sfxNitro();
   }
 
   function triggerBrake() {
@@ -547,6 +683,7 @@
     if (state.brakeTimer > 0 || state.brakeCooldown > 0) return;
     state.brakeTimer = BRAKE.duration;
     state.brakeCooldown = BRAKE.cooldown;
+    sfxStop();
   }
 
   function triggerStop() {
@@ -562,9 +699,11 @@
     state.jumpsUsed = MAX_JUMPS;
     state.fartCooldown = FART_BOOST.cooldown;
     state.scoreFlash = Math.max(state.scoreFlash, 0.12);
+    sfxBoost();
   }
 
   function restartGame() {
+    const hadProgress = state.score > 0 || state.gameOver;
     state.started = false;
     state.gameOver = false;
     state.baseSpeed = BASE_SPEED;
@@ -608,9 +747,11 @@
     scoreEl.textContent = formatScore(0);
     facesEl.textContent = "0";
     updateStatus();
+    if (hadProgress) sfxRestart();
   }
 
   function keyDown(event) {
+    unlockAudio();
     const key = event.key.toLowerCase();
     if (key === " ") {
       event.preventDefault();
@@ -733,6 +874,7 @@
 
     if (Math.floor(state.score) > 0 && Math.floor(state.score) % 100 === 0 && state.scoreFlash <= 0) {
       state.scoreFlash = 0.22;
+      sfxScoreTick();
     }
     if (state.scoreFlash > 0) state.scoreFlash -= dt;
     updateNitroStatus();
@@ -742,9 +884,11 @@
         state.dino.vy = -PHYSICS.jumpImpulse;
         state.dino.onGround = false;
         state.jumpsUsed = 1;
+        sfxJump(true);
       } else if (state.jumpsUsed < MAX_JUMPS) {
         state.dino.vy = -PHYSICS.jumpImpulse * DOUBLE_JUMP_FACTOR;
         state.jumpsUsed += 1;
+        sfxJump(false);
       }
     }
     state.jumpQueued = false;
@@ -791,6 +935,7 @@
             obstacle.nearMissed = true;
             state.nearMissTimer = NEAR_MISS.duration;
             state.nearMissCooldown = NEAR_MISS.cooldown;
+            sfxNearMiss();
           }
         }
       }
@@ -800,6 +945,7 @@
         if (state.dino.y < obstacle.y + obstacle.h * 0.82) {
           state.facesJumped += 1;
           facesEl.textContent = String(state.facesJumped);
+          sfxFaceJumped();
         }
       }
 
@@ -849,6 +995,7 @@
       if (intersects(hitbox, obstacleBox)) {
         state.gameOver = true;
         updateStatus();
+        sfxGameOver();
         return;
       }
     }
@@ -1342,6 +1489,7 @@
   });
 
   canvas.addEventListener("mousedown", (event) => {
+    unlockAudio();
     if (event.button !== 2) return;
     event.preventDefault();
     if (state.gameOver) {
@@ -1353,21 +1501,27 @@
   });
 
   boostBtn.addEventListener("click", () => {
+    unlockAudio();
     if (!state.started && !state.gameOver) state.started = true;
     triggerFartBoost();
   });
 
   nitroBtn.addEventListener("click", () => {
+    unlockAudio();
     if (!state.started && !state.gameOver) state.started = true;
     triggerNitro();
   });
 
   stopBtn.addEventListener("click", () => {
+    unlockAudio();
     if (!state.started && !state.gameOver) state.started = true;
     triggerStop();
   });
 
-  restartBtn.addEventListener("click", restartGame);
+  restartBtn.addEventListener("click", () => {
+    unlockAudio();
+    restartGame();
+  });
 
   resizeCanvas();
   restartGame();
