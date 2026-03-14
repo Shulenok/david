@@ -21,24 +21,42 @@
         <div id="mainMenu" class="main-menu">
           <div class="main-menu-card">
             <h2>Главное меню</h2>
-            <div class="main-menu-actions">
-              <button id="menuPlay" type="button">Играть</button>
-              <button id="menuSettings" type="button">Настройки</button>
-              <button id="menuShop" type="button">Магазин</button>
+            <div id="menuMainPanel" class="menu-panel">
+              <div class="main-menu-actions">
+                <button id="menuPlay" type="button">Играть</button>
+                <button id="menuSettings" type="button">Настройки</button>
+                <button id="menuShop" type="button">Магазин</button>
+              </div>
             </div>
-            <div id="menuSettingsPanel" class="menu-settings-panel hidden">
-              <p class="menu-settings-title">Звук</p>
+
+            <div id="menuSettingsPanel" class="menu-panel menu-settings-panel hidden">
+              <p class="menu-settings-title">Настройки: Звук</p>
               <div class="main-menu-actions">
                 <button id="menuSoundOff" type="button">Выключить звук</button>
                 <button id="menuSoundOn" type="button">Включить звук</button>
               </div>
-              <p class="menu-settings-title">Режим видео</p>
+              <p class="menu-settings-title">Настройки: Режим видео</p>
               <div class="main-menu-actions">
                 <button id="menuVideoWindow" type="button">Оконный режим</button>
                 <button id="menuVideoFull" type="button">Полный режим</button>
               </div>
+              <div class="main-menu-actions menu-actions-spaced">
+                <button id="menuSettingsBack" type="button">Назад</button>
+              </div>
             </div>
-            <p id="menuHint" class="main-menu-hint">Выбери пункт меню.</p>
+
+            <div id="menuShopPanel" class="menu-panel menu-settings-panel hidden">
+              <p class="menu-settings-title">Магазин</p>
+              <div class="main-menu-actions">
+                <button id="shopSkin" type="button">Скин: Илья Pro</button>
+                <button id="shopTrail" type="button">Эффект: Огонь</button>
+                <button id="shopPack" type="button">Пак: Meme SFX</button>
+              </div>
+              <div class="main-menu-actions menu-actions-spaced">
+                <button id="menuShopBack" type="button">Назад</button>
+              </div>
+            </div>
+            <p id="menuHint" class="main-menu-hint">Выбери пункт меню. Кнопка M открывает меню в игре.</p>
           </div>
         </div>
       </div>

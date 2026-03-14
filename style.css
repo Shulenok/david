@@ -156,6 +156,10 @@ h1 {
   gap: 10px;
 }
 
+.menu-panel.hidden {
+  display: none;
+}
+
 .menu-settings-panel {
   margin-top: 14px;
   border-top: 1px solid #e3e3e3;
@@ -187,6 +191,10 @@ h1 {
 
 .menu-video-btn-active:hover {
   background: #16502d;
+}
+
+.menu-actions-spaced {
+  margin-top: 12px;
 }
 
 .main-menu-hint {

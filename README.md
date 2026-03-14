@@ -14,6 +14,7 @@ Open the game here:
 - `Shift` or `E`: nitro
 - `S`: stop
 - `R`: restart
+- `M`: open/close menu
 
 ## Audio
 

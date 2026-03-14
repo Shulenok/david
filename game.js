@@ -16,11 +16,18 @@
   const menuPlayBtn = document.getElementById("menuPlay");
   const menuSettingsBtn = document.getElementById("menuSettings");
   const menuShopBtn = document.getElementById("menuShop");
+  const menuMainPanelEl = document.getElementById("menuMainPanel");
   const menuSettingsPanelEl = document.getElementById("menuSettingsPanel");
+  const menuShopPanelEl = document.getElementById("menuShopPanel");
+  const menuSettingsBackBtn = document.getElementById("menuSettingsBack");
+  const menuShopBackBtn = document.getElementById("menuShopBack");
   const menuSoundOffBtn = document.getElementById("menuSoundOff");
   const menuSoundOnBtn = document.getElementById("menuSoundOn");
   const menuVideoWindowBtn = document.getElementById("menuVideoWindow");
   const menuVideoFullBtn = document.getElementById("menuVideoFull");
+  const shopSkinBtn = document.getElementById("shopSkin");
+  const shopTrailBtn = document.getElementById("shopTrail");
+  const shopPackBtn = document.getElementById("shopPack");
   const menuHintEl = document.getElementById("menuHint");
 
   const WIDTH = 1200;
@@ -664,6 +671,7 @@
 
   const state = {
     menuVisible: true,
+    menuView: "main",
     soundEnabled: true,
     videoMode: "window",
     started: false,
@@ -744,7 +752,7 @@
 
   function updateStatus() {
     if (state.menuVisible) {
-      statusEl.textContent = "Меню: выбери Играть, Настройки или Магазин.";
+      statusEl.textContent = "Меню открыто. Нажми M, чтобы скрыть меню.";
       return;
     }
     if (state.gameOver) {
@@ -752,28 +760,43 @@
       return;
     }
     if (!state.started) {
-      statusEl.textContent = "Space/Right Mouse jump x2, F boost jump, Shift/E nitro, S stop, R restart.";
+      statusEl.textContent = "Space/Right Mouse jump x2, F boost jump, Shift/E nitro, S stop, R restart, M menu.";
       return;
     }
-    statusEl.textContent = "Space/Right Mouse jump x2, F boost jump, Shift/E nitro, S stop, R restart.";
+    statusEl.textContent = "Space/Right Mouse jump x2, F boost jump, Shift/E nitro, S stop, R restart, M menu.";
   }
 
-  function setSettingsPanelVisible(visible) {
+  function setMenuView(view) {
+    state.menuView = view;
+    if (menuMainPanelEl) {
+      menuMainPanelEl.classList.toggle("hidden", view !== "main");
+    }
     if (menuSettingsPanelEl) {
-      menuSettingsPanelEl.classList.toggle("hidden", !visible);
+      menuSettingsPanelEl.classList.toggle("hidden", view !== "settings");
+    }
+    if (menuShopPanelEl) {
+      menuShopPanelEl.classList.toggle("hidden", view !== "shop");
     }
     updateSoundButtons();
     updateVideoButtons();
+    if (menuHintEl) {
+      if (view === "settings") {
+        menuHintEl.textContent = "Настройки: звук и режим видео.";
+      } else if (view === "shop") {
+        menuHintEl.textContent = "Магазин: выбери кнопку товара.";
+      } else {
+        menuHintEl.textContent = "Выбери пункт меню. Кнопка M открывает меню в игре.";
+      }
+    }
   }
 
-  function setMenuVisible(visible) {
+  function setMenuVisible(visible, view = null) {
     state.menuVisible = visible;
     if (mainMenuEl) {
       mainMenuEl.classList.toggle("hidden", !visible);
     }
-    if (visible && menuHintEl) {
-      menuHintEl.textContent = "Выбери пункт меню.";
-      setSettingsPanelVisible(false);
+    if (visible) {
+      setMenuView(view || "main");
     }
     updateStatus();
   }
@@ -807,7 +830,7 @@
       statusEl.textContent = `Boost recharge: ${state.fartCooldown.toFixed(1)}s`;
       return;
     }
-    statusEl.textContent = "Space/Right Mouse jump x2, F boost jump, Shift/E nitro, S stop, R restart.";
+    statusEl.textContent = "Space/Right Mouse jump x2, F boost jump, Shift/E nitro, S stop, R restart, M menu.";
   }
 
   function spawnCloud() {
@@ -1058,14 +1081,27 @@
 
   function keyDown(event) {
     unlockAudio();
-    if (state.menuVisible) {
-      if (event.key === " ") {
-        event.preventDefault();
-        startFromMenu();
+    const key = event.key.toLowerCase();
+    if (key === "m") {
+      event.preventDefault();
+      if (state.menuVisible) {
+        setMenuVisible(false);
+      } else {
+        setMenuVisible(true, "main");
       }
       return;
     }
-    const key = event.key.toLowerCase();
+
+    if (state.menuVisible) {
+      if (event.key === " " || key === "enter") {
+        event.preventDefault();
+        if (state.menuView === "main") {
+          startFromMenu();
+        }
+      }
+      return;
+    }
+
     if (key === " ") {
       event.preventDefault();
       if (state.gameOver) restartGame();
@@ -1160,6 +1196,7 @@
     if (state.nearMissCooldown > 0) state.nearMissCooldown = Math.max(0, state.nearMissCooldown - realDt);
     if (state.fartCooldown > 0) state.fartCooldown = Math.max(0, state.fartCooldown - realDt);
     if (state.gameOver) return;
+    if (state.menuVisible) return;
     if (!state.started) return;
 
     state.baseSpeed = Math.min(MAX_SPEED, state.baseSpeed + dt * 8.5);
@@ -1884,20 +1921,28 @@
   if (menuSettingsBtn) {
     menuSettingsBtn.addEventListener("click", () => {
       unlockAudio();
-      setSettingsPanelVisible(true);
-      if (menuHintEl) {
-        menuHintEl.textContent = "Настройки: звук и режим видео.";
-      }
+      setMenuView("settings");
     });
   }
 
   if (menuShopBtn) {
     menuShopBtn.addEventListener("click", () => {
       unlockAudio();
-      setSettingsPanelVisible(false);
-      if (menuHintEl) {
-        menuHintEl.textContent = "Магазин скоро будет: скины, эффекты и бусты.";
-      }
+      setMenuView("shop");
+    });
+  }
+
+  if (menuSettingsBackBtn) {
+    menuSettingsBackBtn.addEventListener("click", () => {
+      unlockAudio();
+      setMenuView("main");
+    });
+  }
+
+  if (menuShopBackBtn) {
+    menuShopBackBtn.addEventListener("click", () => {
+      unlockAudio();
+      setMenuView("main");
     });
   }
 
@@ -1926,6 +1971,24 @@
     menuVideoFullBtn.addEventListener("click", () => {
       unlockAudio();
       setVideoMode("fullscreen");
+    });
+  }
+
+  if (shopSkinBtn) {
+    shopSkinBtn.addEventListener("click", () => {
+      if (menuHintEl) menuHintEl.textContent = "Скин Илья Pro скоро появится в магазине.";
+    });
+  }
+
+  if (shopTrailBtn) {
+    shopTrailBtn.addEventListener("click", () => {
+      if (menuHintEl) menuHintEl.textContent = "Эффект Огонь скоро появится в магазине.";
+    });
+  }
+
+  if (shopPackBtn) {
+    shopPackBtn.addEventListener("click", () => {
+      if (menuHintEl) menuHintEl.textContent = "Пак Meme SFX скоро появится в магазине.";
     });
   }
 
