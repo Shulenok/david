@@ -102,6 +102,31 @@ h1 {
   gap: 10px;
 }
 
+.menu-settings-panel {
+  margin-top: 14px;
+  border-top: 1px solid #e3e3e3;
+  padding-top: 14px;
+}
+
+.menu-settings-panel.hidden {
+  display: none;
+}
+
+.menu-settings-title {
+  margin: 0 0 10px;
+  color: #4a4a4a;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.menu-sound-btn-active {
+  background: #1f6a3d;
+}
+
+.menu-sound-btn-active:hover {
+  background: #16502d;
+}
+
 .main-menu-hint {
   margin: 14px 0 0;
   color: #4f4f4f;

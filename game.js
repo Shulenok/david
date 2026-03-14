@@ -15,6 +15,9 @@
   const menuPlayBtn = document.getElementById("menuPlay");
   const menuSettingsBtn = document.getElementById("menuSettings");
   const menuShopBtn = document.getElementById("menuShop");
+  const menuSettingsPanelEl = document.getElementById("menuSettingsPanel");
+  const menuSoundOffBtn = document.getElementById("menuSoundOff");
+  const menuSoundOnBtn = document.getElementById("menuSoundOn");
   const menuHintEl = document.getElementById("menuHint");
 
   const WIDTH = 1200;
@@ -115,7 +118,7 @@
     if (!AudioContextClass) return null;
     audio.ctx = new AudioContextClass();
     audio.master = audio.ctx.createGain();
-    audio.master.gain.value = 0.2;
+    audio.master.gain.value = state.soundEnabled ? 0.2 : 0;
     audio.master.connect(audio.ctx.destination);
     return audio.ctx;
   }
@@ -128,6 +131,27 @@
     }
     audio.unlocked = true;
     preloadSamples();
+  }
+
+  function updateSoundButtons() {
+    if (menuSoundOffBtn) {
+      menuSoundOffBtn.classList.toggle("menu-sound-btn-active", !state.soundEnabled);
+    }
+    if (menuSoundOnBtn) {
+      menuSoundOnBtn.classList.toggle("menu-sound-btn-active", state.soundEnabled);
+    }
+  }
+
+  function setSoundEnabled(enabled) {
+    state.soundEnabled = enabled;
+    if (audio.master) {
+      audio.master.gain.value = enabled ? 0.2 : 0;
+    }
+    updateSoundButtons();
+    if (menuHintEl) {
+      menuHintEl.textContent = enabled ? "Звук включен." : "Звук выключен.";
+    }
+    updateStatus();
   }
 
   async function preloadSamples() {
@@ -154,6 +178,7 @@
   function playSample(name, config = {}) {
     const ctx = ensureAudio();
     if (!ctx || !audio.master || !audio.unlocked) return false;
+    if (!state.soundEnabled) return true;
     const buffer = audio.sampleBuffers[name];
     if (!buffer) return false;
 
@@ -188,6 +213,7 @@
   function playTone(config) {
     const ctx = ensureAudio();
     if (!ctx || !audio.master || !audio.unlocked) return;
+    if (!state.soundEnabled) return;
 
     const type = config.type || "sine";
     const freq = config.freq || 440;
@@ -219,6 +245,7 @@
   function playWobble(config) {
     const ctx = ensureAudio();
     if (!ctx || !audio.master || !audio.unlocked) return;
+    if (!state.soundEnabled) return;
 
     const base = config.base || 220;
     const depth = config.depth || 90;
@@ -257,6 +284,7 @@
   function playNoise(config) {
     const ctx = ensureAudio();
     if (!ctx || !audio.master || !audio.unlocked) return;
+    if (!state.soundEnabled) return;
 
     const duration = config.duration || 0.14;
     const volume = config.volume || 0.08;
@@ -579,6 +607,7 @@
 
   const state = {
     menuVisible: true,
+    soundEnabled: true,
     started: false,
     gameOver: false,
     baseSpeed: BASE_SPEED,
@@ -671,6 +700,13 @@
     statusEl.textContent = "Space/Right Mouse jump x2, F boost jump, Shift/E nitro, S stop, R restart.";
   }
 
+  function setSettingsPanelVisible(visible) {
+    if (menuSettingsPanelEl) {
+      menuSettingsPanelEl.classList.toggle("hidden", !visible);
+    }
+    updateSoundButtons();
+  }
+
   function setMenuVisible(visible) {
     state.menuVisible = visible;
     if (mainMenuEl) {
@@ -678,6 +714,7 @@
     }
     if (visible && menuHintEl) {
       menuHintEl.textContent = "Выбери пункт меню.";
+      setSettingsPanelVisible(false);
     }
     updateStatus();
   }
@@ -1780,8 +1817,9 @@
   if (menuSettingsBtn) {
     menuSettingsBtn.addEventListener("click", () => {
       unlockAudio();
+      setSettingsPanelVisible(true);
       if (menuHintEl) {
-        menuHintEl.textContent = "Настройки скоро будут: звук, сложность и управление.";
+        menuHintEl.textContent = "Настройки: выбери Включить звук или Выключить звук.";
       }
     });
   }
@@ -1789,12 +1827,28 @@
   if (menuShopBtn) {
     menuShopBtn.addEventListener("click", () => {
       unlockAudio();
+      setSettingsPanelVisible(false);
       if (menuHintEl) {
         menuHintEl.textContent = "Магазин скоро будет: скины, эффекты и бусты.";
       }
     });
   }
 
+  if (menuSoundOffBtn) {
+    menuSoundOffBtn.addEventListener("click", () => {
+      unlockAudio();
+      setSoundEnabled(false);
+    });
+  }
+
+  if (menuSoundOnBtn) {
+    menuSoundOnBtn.addEventListener("click", () => {
+      unlockAudio();
+      setSoundEnabled(true);
+    });
+  }
+
+  updateSoundButtons();
   resizeCanvas();
   restartGame({ showMenu: true });
   requestAnimationFrame(frame);
