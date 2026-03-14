@@ -869,6 +869,8 @@
         wobbleFreq: random(0.6, 1.8),
         wobbleAmp: random(3, 14),
         phase: random(0, Math.PI * 2),
+        spin: random(0, Math.PI * 2),
+        spinSpeed: random(-0.9, 0.9),
         alpha: random(0.45, 0.95),
       });
     }
@@ -1202,10 +1204,12 @@
       flake.x +=
         flake.drift * dt +
         Math.sin(state.time * flake.wobbleFreq + flake.phase) * flake.wobbleAmp * dt;
+      flake.spin += flake.spinSpeed * dt;
 
       if (flake.y > HEIGHT + 12) {
         flake.y = random(-120, -12);
         flake.x = random(-20, WIDTH + 20);
+        flake.spin = random(0, Math.PI * 2);
       }
       if (flake.x < -24) flake.x = WIDTH + 24;
       if (flake.x > WIDTH + 24) flake.x = -24;
@@ -1451,13 +1455,45 @@
   }
 
   function drawSnow() {
-    const baseAlpha = 0.42 + state.nightLevel * 0.28;
+    const baseAlpha = 0.82 + state.nightLevel * 0.12;
     for (const flake of state.snowflakes) {
-      const alpha = clamp(baseAlpha * flake.alpha, 0.12, 0.9);
-      ctx.fillStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
+      const alpha = clamp(baseAlpha * flake.alpha, 0.55, 0.98);
+      const arm = flake.r * 1.9;
+      const branch = flake.r * 0.7;
+      const lineW = Math.max(1, flake.r * 0.62);
+
+      ctx.save();
+      ctx.translate(flake.x, flake.y);
+      ctx.rotate(flake.spin);
+      ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
+      ctx.fillStyle = `rgba(255,255,255,${clamp(alpha + 0.08, 0, 1).toFixed(3)})`;
+      ctx.lineWidth = lineW;
+      ctx.lineCap = "round";
+
+      for (let i = 0; i < 3; i += 1) {
+        ctx.beginPath();
+        ctx.moveTo(-arm, 0);
+        ctx.lineTo(arm, 0);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(arm * 0.5, 0);
+        ctx.lineTo(arm * 0.74, branch);
+        ctx.moveTo(arm * 0.5, 0);
+        ctx.lineTo(arm * 0.74, -branch);
+        ctx.moveTo(-arm * 0.5, 0);
+        ctx.lineTo(-arm * 0.74, branch);
+        ctx.moveTo(-arm * 0.5, 0);
+        ctx.lineTo(-arm * 0.74, -branch);
+        ctx.stroke();
+
+        ctx.rotate(Math.PI / 3);
+      }
+
       ctx.beginPath();
-      ctx.arc(flake.x, flake.y, flake.r, 0, Math.PI * 2);
+      ctx.arc(0, 0, Math.max(0.8, flake.r * 0.46), 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
     }
   }
 
