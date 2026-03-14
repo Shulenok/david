@@ -64,6 +64,50 @@ h1 {
   background: #fff;
 }
 
+.game-wrap {
+  position: relative;
+}
+
+.main-menu {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  background: rgba(8, 11, 20, 0.56);
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  z-index: 10;
+}
+
+.main-menu.hidden {
+  display: none;
+}
+
+.main-menu-card {
+  width: min(540px, 92%);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #d7d7d7;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.24);
+}
+
+.main-menu-card h2 {
+  margin: 0 0 16px;
+  font-size: clamp(24px, 3.2vw, 40px);
+}
+
+.main-menu-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.main-menu-hint {
+  margin: 14px 0 0;
+  color: #4f4f4f;
+  font-size: 18px;
+}
+
 .controls {
   margin-top: 16px;
   display: flex;
@@ -117,5 +161,9 @@ button:hover {
   #status,
   button {
     font-size: 16px;
+  }
+
+  .main-menu-hint {
+    font-size: 15px;
   }
 }

@@ -16,7 +16,20 @@
           <span>Faces: <b id="faces">0</b></span>
         </div>
       </header>
-      <canvas id="game" width="1200" height="720" aria-label="Ilya runner game area"></canvas>
+      <div class="game-wrap">
+        <canvas id="game" width="1200" height="720" aria-label="Ilya runner game area"></canvas>
+        <div id="mainMenu" class="main-menu">
+          <div class="main-menu-card">
+            <h2>Главное меню</h2>
+            <div class="main-menu-actions">
+              <button id="menuPlay" type="button">Играть</button>
+              <button id="menuSettings" type="button">Настройки</button>
+              <button id="menuShop" type="button">Магазин</button>
+            </div>
+            <p id="menuHint" class="main-menu-hint">Выбери пункт меню.</p>
+          </div>
+        </div>
+      </div>
       <div class="controls">
         <p id="status">Space/Right Mouse jump x2, F boost jump, Shift/E nitro, S stop, R restart.</p>
         <div class="action-buttons">

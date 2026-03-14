@@ -11,6 +11,11 @@
   const nitroBtn = document.getElementById("nitro");
   const stopBtn = document.getElementById("stop");
   const restartBtn = document.getElementById("restart");
+  const mainMenuEl = document.getElementById("mainMenu");
+  const menuPlayBtn = document.getElementById("menuPlay");
+  const menuSettingsBtn = document.getElementById("menuSettings");
+  const menuShopBtn = document.getElementById("menuShop");
+  const menuHintEl = document.getElementById("menuHint");
 
   const WIDTH = 1200;
   const HEIGHT = 720;
@@ -573,6 +578,7 @@
   };
 
   const state = {
+    menuVisible: true,
     started: false,
     gameOver: false,
     baseSpeed: BASE_SPEED,
@@ -650,6 +656,10 @@
   }
 
   function updateStatus() {
+    if (state.menuVisible) {
+      statusEl.textContent = "Меню: выбери Играть, Настройки или Магазин.";
+      return;
+    }
     if (state.gameOver) {
       statusEl.textContent = "Game over. Press Space, Right Mouse, R, or Restart.";
       return;
@@ -659,6 +669,24 @@
       return;
     }
     statusEl.textContent = "Space/Right Mouse jump x2, F boost jump, Shift/E nitro, S stop, R restart.";
+  }
+
+  function setMenuVisible(visible) {
+    state.menuVisible = visible;
+    if (mainMenuEl) {
+      mainMenuEl.classList.toggle("hidden", !visible);
+    }
+    if (visible && menuHintEl) {
+      menuHintEl.textContent = "Выбери пункт меню.";
+    }
+    updateStatus();
+  }
+
+  function startFromMenu() {
+    if (state.gameOver) restartGame();
+    state.started = true;
+    setMenuVisible(false);
+    updateStatus();
   }
 
   function updateNitroStatus() {
@@ -878,7 +906,8 @@
     sfxBoost();
   }
 
-  function restartGame() {
+  function restartGame(options = {}) {
+    const showMenu = options.showMenu === true;
     const hadProgress = state.score > 0 || state.gameOver;
     state.started = false;
     state.gameOver = false;
@@ -922,12 +951,24 @@
 
     scoreEl.textContent = formatScore(0);
     facesEl.textContent = "0";
+    if (showMenu) {
+      setMenuVisible(true);
+    } else {
+      setMenuVisible(false);
+    }
     updateStatus();
     if (hadProgress) sfxRestart();
   }
 
   function keyDown(event) {
     unlockAudio();
+    if (state.menuVisible) {
+      if (event.key === " ") {
+        event.preventDefault();
+        startFromMenu();
+      }
+      return;
+    }
     const key = event.key.toLowerCase();
     if (key === " ") {
       event.preventDefault();
@@ -1632,7 +1673,7 @@
     drawStopOverlay();
     drawNearMissOverlay();
 
-    if (!state.started && !state.gameOver) {
+    if (!state.started && !state.gameOver && !state.menuVisible) {
       const ink = mixColor("#666666", "#dcdcdc", state.nightLevel);
       ctx.fillStyle = ink;
       ctx.font = "600 34px Segoe UI";
@@ -1692,6 +1733,7 @@
 
   canvas.addEventListener("mousedown", (event) => {
     unlockAudio();
+    if (state.menuVisible) return;
     if (event.button !== 2) return;
     event.preventDefault();
     if (state.gameOver) {
@@ -1704,18 +1746,21 @@
 
   boostBtn.addEventListener("click", () => {
     unlockAudio();
+    if (state.menuVisible) return;
     if (!state.started && !state.gameOver) state.started = true;
     triggerFartBoost();
   });
 
   nitroBtn.addEventListener("click", () => {
     unlockAudio();
+    if (state.menuVisible) return;
     if (!state.started && !state.gameOver) state.started = true;
     triggerNitro();
   });
 
   stopBtn.addEventListener("click", () => {
     unlockAudio();
+    if (state.menuVisible) return;
     if (!state.started && !state.gameOver) state.started = true;
     triggerStop();
   });
@@ -1725,7 +1770,32 @@
     restartGame();
   });
 
+  if (menuPlayBtn) {
+    menuPlayBtn.addEventListener("click", () => {
+      unlockAudio();
+      startFromMenu();
+    });
+  }
+
+  if (menuSettingsBtn) {
+    menuSettingsBtn.addEventListener("click", () => {
+      unlockAudio();
+      if (menuHintEl) {
+        menuHintEl.textContent = "Настройки скоро будут: звук, сложность и управление.";
+      }
+    });
+  }
+
+  if (menuShopBtn) {
+    menuShopBtn.addEventListener("click", () => {
+      unlockAudio();
+      if (menuHintEl) {
+        menuHintEl.textContent = "Магазин скоро будет: скины, эффекты и бусты.";
+      }
+    });
+  }
+
   resizeCanvas();
-  restartGame();
+  restartGame({ showMenu: true });
   requestAnimationFrame(frame);
 })();
