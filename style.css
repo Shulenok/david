@@ -34,6 +34,60 @@ body {
   box-shadow: 0 20px 44px rgba(0, 0, 0, 0.11);
 }
 
+#appRoot:fullscreen {
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  border-radius: 0;
+  border: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+#appRoot:fullscreen .game-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+#appRoot:fullscreen #game {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+
+#appRoot:fullscreen .main-menu {
+  border-radius: 0;
+}
+
+#appRoot:-webkit-full-screen {
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  border-radius: 0;
+  border: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+#appRoot:-webkit-full-screen .game-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+#appRoot:-webkit-full-screen #game {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+
+#appRoot:-webkit-full-screen .main-menu {
+  border-radius: 0;
+}
+
 .header {
   display: flex;
   gap: 18px;
@@ -124,6 +178,14 @@ h1 {
 }
 
 .menu-sound-btn-active:hover {
+  background: #16502d;
+}
+
+.menu-video-btn-active {
+  background: #1f6a3d;
+}
+
+.menu-video-btn-active:hover {
   background: #16502d;
 }
 

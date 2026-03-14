@@ -11,6 +11,7 @@
   const nitroBtn = document.getElementById("nitro");
   const stopBtn = document.getElementById("stop");
   const restartBtn = document.getElementById("restart");
+  const appRootEl = document.getElementById("appRoot");
   const mainMenuEl = document.getElementById("mainMenu");
   const menuPlayBtn = document.getElementById("menuPlay");
   const menuSettingsBtn = document.getElementById("menuSettings");
@@ -18,6 +19,8 @@
   const menuSettingsPanelEl = document.getElementById("menuSettingsPanel");
   const menuSoundOffBtn = document.getElementById("menuSoundOff");
   const menuSoundOnBtn = document.getElementById("menuSoundOn");
+  const menuVideoWindowBtn = document.getElementById("menuVideoWindow");
+  const menuVideoFullBtn = document.getElementById("menuVideoFull");
   const menuHintEl = document.getElementById("menuHint");
 
   const WIDTH = 1200;
@@ -152,6 +155,60 @@
       menuHintEl.textContent = enabled ? "Звук включен." : "Звук выключен.";
     }
     updateStatus();
+  }
+
+  function getFullscreenElement() {
+    return document.fullscreenElement || document.webkitFullscreenElement || null;
+  }
+
+  function isGameFullscreen() {
+    const fullEl = getFullscreenElement();
+    return fullEl === appRootEl || fullEl === document.documentElement;
+  }
+
+  function updateVideoButtons() {
+    const full = isGameFullscreen();
+    state.videoMode = full ? "fullscreen" : "window";
+    if (menuVideoWindowBtn) {
+      menuVideoWindowBtn.classList.toggle("menu-video-btn-active", !full);
+    }
+    if (menuVideoFullBtn) {
+      menuVideoFullBtn.classList.toggle("menu-video-btn-active", full);
+    }
+  }
+
+  async function setVideoMode(mode) {
+    const target = appRootEl || document.documentElement;
+    try {
+      if (mode === "fullscreen") {
+        if (!isGameFullscreen()) {
+          if (target.requestFullscreen) {
+            await target.requestFullscreen();
+          } else if (target.webkitRequestFullscreen) {
+            target.webkitRequestFullscreen();
+          } else if (menuHintEl) {
+            menuHintEl.textContent = "Полный режим не поддерживается в этом браузере.";
+          }
+        }
+      } else if (getFullscreenElement()) {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
+      }
+    } catch (error) {
+      console.warn("Failed to switch video mode:", error);
+      if (menuHintEl) {
+        menuHintEl.textContent = "Не удалось переключить режим видео.";
+      }
+    }
+
+    updateVideoButtons();
+    resizeCanvas();
+    if (menuHintEl) {
+      menuHintEl.textContent = isGameFullscreen() ? "Режим видео: полный." : "Режим видео: оконный.";
+    }
   }
 
   async function preloadSamples() {
@@ -608,6 +665,7 @@
   const state = {
     menuVisible: true,
     soundEnabled: true,
+    videoMode: "window",
     started: false,
     gameOver: false,
     baseSpeed: BASE_SPEED,
@@ -705,6 +763,7 @@
       menuSettingsPanelEl.classList.toggle("hidden", !visible);
     }
     updateSoundButtons();
+    updateVideoButtons();
   }
 
   function setMenuVisible(visible) {
@@ -1761,6 +1820,14 @@
   }
 
   window.addEventListener("resize", resizeCanvas, { passive: true });
+  document.addEventListener("fullscreenchange", () => {
+    updateVideoButtons();
+    resizeCanvas();
+  });
+  document.addEventListener("webkitfullscreenchange", () => {
+    updateVideoButtons();
+    resizeCanvas();
+  });
   window.addEventListener("keydown", keyDown);
   window.addEventListener("keyup", keyUp);
 
@@ -1819,7 +1886,7 @@
       unlockAudio();
       setSettingsPanelVisible(true);
       if (menuHintEl) {
-        menuHintEl.textContent = "Настройки: выбери Включить звук или Выключить звук.";
+        menuHintEl.textContent = "Настройки: звук и режим видео.";
       }
     });
   }
@@ -1848,7 +1915,22 @@
     });
   }
 
+  if (menuVideoWindowBtn) {
+    menuVideoWindowBtn.addEventListener("click", () => {
+      unlockAudio();
+      setVideoMode("window");
+    });
+  }
+
+  if (menuVideoFullBtn) {
+    menuVideoFullBtn.addEventListener("click", () => {
+      unlockAudio();
+      setVideoMode("fullscreen");
+    });
+  }
+
   updateSoundButtons();
+  updateVideoButtons();
   resizeCanvas();
   restartGame({ showMenu: true });
   requestAnimationFrame(frame);
