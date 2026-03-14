@@ -715,6 +715,7 @@
     obstacles: [],
     clouds: [],
     stars: [],
+    snowflakes: [],
     hills: [],
     billboards: [],
     nextMaximaScore: 1000,
@@ -851,6 +852,24 @@
         y: random(10, GROUND_Y - 30),
         r: random(0.7, 1.7),
         twinkle: random(0.6, 1.4),
+      });
+    }
+  }
+
+  function spawnSnowField() {
+    state.snowflakes.length = 0;
+    const flakesCount = 140;
+    for (let i = 0; i < flakesCount; i += 1) {
+      state.snowflakes.push({
+        x: random(0, WIDTH),
+        y: random(-HEIGHT, HEIGHT),
+        r: random(1, 2.7),
+        speed: random(35, 92),
+        drift: random(-18, 18),
+        wobbleFreq: random(0.6, 1.8),
+        wobbleAmp: random(3, 14),
+        phase: random(0, Math.PI * 2),
+        alpha: random(0.45, 0.95),
       });
     }
   }
@@ -1057,6 +1076,7 @@
     state.blinkDuration = 0;
     state.obstacles.length = 0;
     state.clouds.length = 0;
+    state.snowflakes.length = 0;
     state.hills.length = 0;
     state.billboards.length = 0;
     state.nextMaximaScore = 1000;
@@ -1065,6 +1085,7 @@
     state.dino.onGround = true;
 
     spawnStarField();
+    spawnSnowField();
     for (let i = 0; i < 3; i += 1) spawnCloud();
     for (let i = 0; i < 4; i += 1) spawnHill();
 
@@ -1173,6 +1194,21 @@
       const billboard = state.billboards[i];
       billboard.x -= state.speed * billboard.speedMul * dt;
       if (billboard.x + billboard.w < -60) state.billboards.splice(i, 1);
+    }
+
+    for (let i = 0; i < state.snowflakes.length; i += 1) {
+      const flake = state.snowflakes[i];
+      flake.y += (flake.speed + state.speed * 0.04) * dt;
+      flake.x +=
+        flake.drift * dt +
+        Math.sin(state.time * flake.wobbleFreq + flake.phase) * flake.wobbleAmp * dt;
+
+      if (flake.y > HEIGHT + 12) {
+        flake.y = random(-120, -12);
+        flake.x = random(-20, WIDTH + 20);
+      }
+      if (flake.x < -24) flake.x = WIDTH + 24;
+      if (flake.x > WIDTH + 24) flake.x = -24;
     }
   }
 
@@ -1410,6 +1446,17 @@
       ctx.lineTo(hill.x + hill.w * 0.5, hill.y - hill.h);
       ctx.lineTo(hill.x + hill.w, hill.y + 2);
       ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  function drawSnow() {
+    const baseAlpha = 0.42 + state.nightLevel * 0.28;
+    for (const flake of state.snowflakes) {
+      const alpha = clamp(baseAlpha * flake.alpha, 0.12, 0.9);
+      ctx.fillStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
+      ctx.beginPath();
+      ctx.arc(flake.x, flake.y, flake.r, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -1800,6 +1847,7 @@
     drawHills();
     drawBillboards();
     drawGround();
+    drawSnow();
     for (const obstacle of state.obstacles) drawObstacle(obstacle);
     drawDino();
     drawNitroOverlay();
