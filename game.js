@@ -23,6 +23,8 @@
   const menuShopBackBtn = document.getElementById("menuShopBack");
   const menuSoundOffBtn = document.getElementById("menuSoundOff");
   const menuSoundOnBtn = document.getElementById("menuSoundOn");
+  const menuSnowOffBtn = document.getElementById("menuSnowOff");
+  const menuSnowOnBtn = document.getElementById("menuSnowOn");
   const menuVideoWindowBtn = document.getElementById("menuVideoWindow");
   const menuVideoFullBtn = document.getElementById("menuVideoFull");
   const shopSkinBtn = document.getElementById("shopSkin");
@@ -152,6 +154,15 @@
     }
   }
 
+  function updateSnowButtons() {
+    if (menuSnowOffBtn) {
+      menuSnowOffBtn.classList.toggle("menu-snow-btn-active", !state.snowEnabled);
+    }
+    if (menuSnowOnBtn) {
+      menuSnowOnBtn.classList.toggle("menu-snow-btn-active", state.snowEnabled);
+    }
+  }
+
   function setSoundEnabled(enabled) {
     state.soundEnabled = enabled;
     if (audio.master) {
@@ -160,6 +171,15 @@
     updateSoundButtons();
     if (menuHintEl) {
       menuHintEl.textContent = enabled ? "Звук включен." : "Звук выключен.";
+    }
+    updateStatus();
+  }
+
+  function setSnowEnabled(enabled) {
+    state.snowEnabled = enabled;
+    updateSnowButtons();
+    if (menuHintEl) {
+      menuHintEl.textContent = enabled ? "Снег включен." : "Снег отключен.";
     }
     updateStatus();
   }
@@ -673,6 +693,7 @@
     menuVisible: true,
     menuView: "main",
     soundEnabled: true,
+    snowEnabled: true,
     videoMode: "window",
     started: false,
     gameOver: false,
@@ -779,10 +800,11 @@
       menuShopPanelEl.classList.toggle("hidden", view !== "shop");
     }
     updateSoundButtons();
+    updateSnowButtons();
     updateVideoButtons();
     if (menuHintEl) {
       if (view === "settings") {
-        menuHintEl.textContent = "Настройки: звук и режим видео.";
+        menuHintEl.textContent = "Настройки: звук, снег и режим видео.";
       } else if (view === "shop") {
         menuHintEl.textContent = "Магазин: выбери кнопку товара.";
       } else {
@@ -1198,21 +1220,23 @@
       if (billboard.x + billboard.w < -60) state.billboards.splice(i, 1);
     }
 
-    for (let i = 0; i < state.snowflakes.length; i += 1) {
-      const flake = state.snowflakes[i];
-      flake.y += (flake.speed + state.speed * 0.04) * dt;
-      flake.x +=
-        flake.drift * dt +
-        Math.sin(state.time * flake.wobbleFreq + flake.phase) * flake.wobbleAmp * dt;
-      flake.spin += flake.spinSpeed * dt;
+    if (state.snowEnabled) {
+      for (let i = 0; i < state.snowflakes.length; i += 1) {
+        const flake = state.snowflakes[i];
+        flake.y += (flake.speed + state.speed * 0.04) * dt;
+        flake.x +=
+          flake.drift * dt +
+          Math.sin(state.time * flake.wobbleFreq + flake.phase) * flake.wobbleAmp * dt;
+        flake.spin += flake.spinSpeed * dt;
 
-      if (flake.y > HEIGHT + 12) {
-        flake.y = random(-120, -12);
-        flake.x = random(-20, WIDTH + 20);
-        flake.spin = random(0, Math.PI * 2);
+        if (flake.y > HEIGHT + 12) {
+          flake.y = random(-120, -12);
+          flake.x = random(-20, WIDTH + 20);
+          flake.spin = random(0, Math.PI * 2);
+        }
+        if (flake.x < -24) flake.x = WIDTH + 24;
+        if (flake.x > WIDTH + 24) flake.x = -24;
       }
-      if (flake.x < -24) flake.x = WIDTH + 24;
-      if (flake.x > WIDTH + 24) flake.x = -24;
     }
   }
 
@@ -1455,6 +1479,7 @@
   }
 
   function drawSnow() {
+    if (!state.snowEnabled) return;
     const baseAlpha = 0.82 + state.nightLevel * 0.12;
     for (const flake of state.snowflakes) {
       const alpha = clamp(baseAlpha * flake.alpha, 0.55, 0.98);
@@ -2044,6 +2069,18 @@
     });
   }
 
+  if (menuSnowOffBtn) {
+    menuSnowOffBtn.addEventListener("click", () => {
+      setSnowEnabled(false);
+    });
+  }
+
+  if (menuSnowOnBtn) {
+    menuSnowOnBtn.addEventListener("click", () => {
+      setSnowEnabled(true);
+    });
+  }
+
   if (menuVideoWindowBtn) {
     menuVideoWindowBtn.addEventListener("click", () => {
       unlockAudio();
@@ -2077,6 +2114,7 @@
   }
 
   updateSoundButtons();
+  updateSnowButtons();
   updateVideoButtons();
   resizeCanvas();
   restartGame({ showMenu: true });
