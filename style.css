@@ -149,8 +149,15 @@ h1 {
   font-size: clamp(40px, 5vw, 72px);
   letter-spacing: 0.06em;
   line-height: 0.95;
-  color: #1e2b45;
-  text-shadow: 0 4px 0 rgba(255, 255, 255, 0.66);
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #ff3059 0%, #ff7f2a 24%, #ffd447 46%, #22bfa1 70%, #5e7bff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(24, 38, 64, 0.3);
+  text-shadow:
+    0 3px 0 rgba(255, 255, 255, 0.42),
+    0 8px 18px rgba(21, 40, 77, 0.18);
 }
 
 .hud {
