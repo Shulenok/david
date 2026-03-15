@@ -154,9 +154,13 @@ h1 {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  -webkit-text-stroke: 1px rgba(24, 38, 64, 0.3);
+  -webkit-text-stroke: 2px #080808;
   text-shadow:
-    0 3px 0 rgba(255, 255, 255, 0.42),
+    -1px -1px 0 #080808,
+    1px -1px 0 #080808,
+    -1px 1px 0 #080808,
+    1px 1px 0 #080808,
+    0 3px 0 rgba(255, 255, 255, 0.38),
     0 8px 18px rgba(21, 40, 77, 0.18);
 }
 
