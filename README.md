@@ -11,10 +11,13 @@ Open the game here:
 
 - `Space` or right mouse button: jump (double jump)
 - `F`: boost jump
+- `G`: big jump
+- `P`: perdeshka
 - `Shift` or `E`: nitro
 - `S`: stop
 - `R`: restart
 - `M`: open/close menu
+- Secret easter egg: type `ILYA`
 
 ## Audio
 

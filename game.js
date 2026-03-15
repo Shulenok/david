@@ -8,6 +8,8 @@
   const facesEl = document.getElementById("faces");
   const statusEl = document.getElementById("status");
   const boostBtn = document.getElementById("boost");
+  const fartBtn = document.getElementById("fart");
+  const megaJumpBtn = document.getElementById("megaJump");
   const nitroBtn = document.getElementById("nitro");
   const stopBtn = document.getElementById("stop");
   const restartBtn = document.getElementById("restart");
@@ -56,6 +58,15 @@
     minImpulse: 1800,
     maxImpulse: 2100,
     cooldown: 7.5,
+  };
+  const BIG_JUMP = {
+    impulse: 2550,
+    cooldown: 12,
+  };
+  const EASTER_EGG = {
+    code: "ilya",
+    duration: 12,
+    scoreBonus: 1.22,
   };
   const NEAR_MISS = {
     distance: 105,
@@ -427,6 +438,27 @@
     playNoise({ duration: 0.1, volume: 0.04, lowpass: 1000 });
   }
 
+  function sfxFart() {
+    const played = playSample("boostFunny", { volume: 1.05, rate: 0.88, offset: 0.22, duration: 0.35 });
+    if (!played) {
+      playNoise({ duration: 0.16, volume: 0.09, lowpass: 700 });
+      playWobble({ type: "triangle", base: 145, depth: 50, speed: 12, duration: 0.14, volume: 0.08 });
+      return;
+    }
+    playNoise({ duration: 0.07, volume: 0.03, lowpass: 860, delay: 0.03 });
+  }
+
+  function sfxMegaJump() {
+    playSample("jumpDouble", { volume: 1, rate: 0.95, offset: 0.03, duration: 0.28 });
+    playTone({ type: "square", freq: 340, slideTo: 860, duration: 0.16, volume: 0.08 });
+    playWobble({ type: "triangle", base: 430, depth: 140, speed: 28, duration: 0.12, volume: 0.08, delay: 0.03 });
+  }
+
+  function sfxEasterEgg() {
+    playTone({ type: "square", freq: 620, slideTo: 980, duration: 0.08, volume: 0.08 });
+    playTone({ type: "triangle", freq: 820, slideTo: 1320, duration: 0.07, volume: 0.08, delay: 0.06 });
+  }
+
   function sfxNitro() {
     const played = playSample("nitroFunny", { volume: 0.95, rate: 1.28 });
     if (!played) {
@@ -705,6 +737,10 @@
     jumpQueued: false,
     jumpsUsed: 0,
     fartCooldown: 0,
+    megaJumpCooldown: 0,
+    fartBurstTimer: 0,
+    easterEggTimer: 0,
+    easterBuffer: "",
     duckHeld: false,
     brakeTimer: 0,
     brakeCooldown: 0,
@@ -782,10 +818,23 @@
       return;
     }
     if (!state.started) {
-      statusEl.textContent = "Space/Right Mouse jump x2, F boost jump, Shift/E nitro, S stop, R restart, M menu.";
+      statusEl.textContent = "Space/Right Mouse jump x2, F boost jump, G big jump, P perdeshka, Shift/E nitro, S stop, R restart, M menu.";
       return;
     }
-    statusEl.textContent = "Space/Right Mouse jump x2, F boost jump, Shift/E nitro, S stop, R restart, M menu.";
+    statusEl.textContent = "Space/Right Mouse jump x2, F boost jump, G big jump, P perdeshka, Shift/E nitro, S stop, R restart, M menu.";
+  }
+
+  function trackEasterKey(key) {
+    if (key.length !== 1 || key < "a" || key > "z") return;
+    state.easterBuffer = (state.easterBuffer + key).slice(-EASTER_EGG.code.length);
+    if (state.easterBuffer === EASTER_EGG.code) {
+      state.easterEggTimer = EASTER_EGG.duration;
+      state.scoreFlash = Math.max(state.scoreFlash, 0.18);
+      sfxEasterEgg();
+      if (statusEl && !state.menuVisible) {
+        statusEl.textContent = "Пасхалка активна! Продержись дольше!";
+      }
+    }
   }
 
   function setMenuView(view) {
@@ -808,7 +857,7 @@
       } else if (view === "shop") {
         menuHintEl.textContent = "Магазин: выбери кнопку товара.";
       } else {
-        menuHintEl.textContent = "Выбери пункт меню. Кнопка M открывает меню в игре.";
+        menuHintEl.textContent = "Выбери пункт меню. Кнопка M открывает меню в игре. Секрет: ILYA.";
       }
     }
   }
@@ -833,6 +882,10 @@
 
   function updateNitroStatus() {
     if (state.gameOver || !state.started) return;
+    if (state.easterEggTimer > 0) {
+      statusEl.textContent = `Пасхалка активна: x${EASTER_EGG.scoreBonus.toFixed(2)} очков`;
+      return;
+    }
     if (state.nearMissTimer > 0) {
       statusEl.textContent = "Cinematic dodge!";
       return;
@@ -853,7 +906,11 @@
       statusEl.textContent = `Boost recharge: ${state.fartCooldown.toFixed(1)}s`;
       return;
     }
-    statusEl.textContent = "Space/Right Mouse jump x2, F boost jump, Shift/E nitro, S stop, R restart, M menu.";
+    if (state.megaJumpCooldown > 0) {
+      statusEl.textContent = `Big jump recharge: ${state.megaJumpCooldown.toFixed(1)}s`;
+      return;
+    }
+    statusEl.textContent = "Space/Right Mouse jump x2, F boost jump, G big jump, P perdeshka, Shift/E nitro, S stop, R restart, M menu.";
   }
 
   function spawnCloud() {
@@ -1068,6 +1125,24 @@
     sfxBoost();
   }
 
+  function triggerFartJoke() {
+    if (state.gameOver || !state.started) return;
+    state.fartBurstTimer = 0.55;
+    sfxFart();
+  }
+
+  function triggerBigJump() {
+    if (state.gameOver || !state.started) return;
+    if (state.megaJumpCooldown > 0) return;
+    state.dino.vy = -BIG_JUMP.impulse;
+    state.dino.onGround = false;
+    state.jumpQueued = false;
+    state.jumpsUsed = MAX_JUMPS;
+    state.megaJumpCooldown = BIG_JUMP.cooldown;
+    state.scoreFlash = Math.max(state.scoreFlash, 0.14);
+    sfxMegaJump();
+  }
+
   function restartGame(options = {}) {
     const showMenu = options.showMenu === true;
     const hadProgress = state.score > 0 || state.gameOver;
@@ -1080,6 +1155,10 @@
     state.jumpQueued = false;
     state.jumpsUsed = 0;
     state.fartCooldown = 0;
+    state.megaJumpCooldown = 0;
+    state.fartBurstTimer = 0;
+    state.easterEggTimer = 0;
+    state.easterBuffer = "";
     state.nearMissTimer = 0;
     state.nearMissCooldown = 0;
     state.duckHeld = false;
@@ -1127,6 +1206,7 @@
   function keyDown(event) {
     unlockAudio();
     const key = event.key.toLowerCase();
+    trackEasterKey(key);
     if (key === "m") {
       event.preventDefault();
       if (state.menuVisible) {
@@ -1161,6 +1241,12 @@
     } else if (event.code === "KeyF") {
       if (!state.started) state.started = true;
       triggerFartBoost();
+    } else if (event.code === "KeyG") {
+      if (!state.started) state.started = true;
+      triggerBigJump();
+    } else if (event.code === "KeyP") {
+      if (!state.started) state.started = true;
+      triggerFartJoke();
     } else if (event.code === "KeyR") {
       restartGame();
     }
@@ -1259,6 +1345,9 @@
     if (state.nearMissTimer > 0) state.nearMissTimer = Math.max(0, state.nearMissTimer - realDt);
     if (state.nearMissCooldown > 0) state.nearMissCooldown = Math.max(0, state.nearMissCooldown - realDt);
     if (state.fartCooldown > 0) state.fartCooldown = Math.max(0, state.fartCooldown - realDt);
+    if (state.megaJumpCooldown > 0) state.megaJumpCooldown = Math.max(0, state.megaJumpCooldown - realDt);
+    if (state.fartBurstTimer > 0) state.fartBurstTimer = Math.max(0, state.fartBurstTimer - realDt);
+    if (state.easterEggTimer > 0) state.easterEggTimer = Math.max(0, state.easterEggTimer - realDt);
     if (state.gameOver) return;
     if (state.menuVisible) return;
     if (!state.started) return;
@@ -1272,7 +1361,8 @@
     const brakeFactor = state.brakeTimer > 0 ? BRAKE.speedFactor : 1;
     state.speed = Math.min(MAX_SPEED + NITRO.boost, (state.baseSpeed + nitroBoost) * brakeFactor);
 
-    state.score += dt * 12;
+    const scoreBoost = state.easterEggTimer > 0 ? EASTER_EGG.scoreBonus : 1;
+    state.score += dt * 12 * scoreBoost;
     scoreEl.textContent = formatScore(state.score);
 
     while (state.score >= state.nextMaximaScore) {
@@ -1775,6 +1865,44 @@
     ctx.fillRect(0, HEIGHT - 46, WIDTH, 46);
   }
 
+  function drawFartBurst() {
+    if (state.fartBurstTimer <= 0) return;
+    const rect = dinoRect();
+    const t = clamp(state.fartBurstTimer / 0.55, 0, 1);
+    const puffs = 5;
+    for (let i = 0; i < puffs; i += 1) {
+      const shift = i * 10;
+      const x = rect.x - 18 - i * 12 - (1 - t) * 26;
+      const y = rect.y + rect.h * 0.66 + Math.sin(state.time * 7 + i) * 4 - shift * 0.1;
+      const r = 9 + i * 2 + (1 - t) * 6;
+      ctx.fillStyle = `rgba(168,255,140,${(0.14 + t * 0.18).toFixed(3)})`;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawEasterOverlay() {
+    if (state.easterEggTimer <= 0) return;
+    const t = clamp(state.easterEggTimer / EASTER_EGG.duration, 0, 1);
+    const pulse = 0.65 + Math.sin(state.time * 8) * 0.35;
+    const alpha = clamp(0.08 + 0.08 * pulse * t, 0, 0.2);
+    const grad = ctx.createLinearGradient(0, 0, WIDTH, 0);
+    grad.addColorStop(0, `rgba(255, 80, 130, ${alpha.toFixed(3)})`);
+    grad.addColorStop(0.25, `rgba(255, 175, 65, ${alpha.toFixed(3)})`);
+    grad.addColorStop(0.5, `rgba(255, 231, 90, ${alpha.toFixed(3)})`);
+    grad.addColorStop(0.75, `rgba(45, 220, 175, ${alpha.toFixed(3)})`);
+    grad.addColorStop(1, `rgba(111, 130, 255, ${alpha.toFixed(3)})`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+    ctx.fillStyle = `rgba(255,255,255,${clamp(0.55 * t, 0.15, 0.55).toFixed(3)})`;
+    ctx.font = "800 30px Segoe UI";
+    ctx.textAlign = "center";
+    ctx.fillText("ПАСХАЛКА АКТИВНА!", WIDTH * 0.5, 42);
+    ctx.textAlign = "start";
+  }
+
   function drawDino() {
     const ducking = state.duckHeld && state.dino.onGround;
     const rect = dinoRect();
@@ -1911,9 +2039,11 @@
     drawSnow();
     for (const obstacle of state.obstacles) drawObstacle(obstacle);
     drawDino();
+    drawFartBurst();
     drawNitroOverlay();
     drawStopOverlay();
     drawNearMissOverlay();
+    drawEasterOverlay();
 
     if (!state.started && !state.gameOver && !state.menuVisible) {
       const ink = mixColor("#666666", "#dcdcdc", state.nightLevel);
@@ -2000,6 +2130,24 @@
     if (!state.started && !state.gameOver) state.started = true;
     triggerFartBoost();
   });
+
+  if (fartBtn) {
+    fartBtn.addEventListener("click", () => {
+      unlockAudio();
+      if (state.menuVisible) return;
+      if (!state.started && !state.gameOver) state.started = true;
+      triggerFartJoke();
+    });
+  }
+
+  if (megaJumpBtn) {
+    megaJumpBtn.addEventListener("click", () => {
+      unlockAudio();
+      if (state.menuVisible) return;
+      if (!state.started && !state.gameOver) state.started = true;
+      triggerBigJump();
+    });
+  }
 
   nitroBtn.addEventListener("click", () => {
     unlockAudio();
