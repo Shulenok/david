@@ -150,15 +150,15 @@ h1 {
   letter-spacing: 0.06em;
   line-height: 0.95;
   text-transform: uppercase;
-  background: linear-gradient(90deg, #ff3059 0%, #ff7f2a 24%, #ffd447 46%, #22bfa1 70%, #5e7bff 100%);
+  background: linear-gradient(90deg, #ff4f7a 0%, #ff9738 24%, #ffe45a 46%, #2ed7b5 70%, #7f97ff 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  -webkit-text-stroke: 1px rgba(8, 8, 8, 0.6);
+  -webkit-text-stroke: 1px rgba(8, 8, 8, 0.35);
   text-shadow:
-    0 0 1px rgba(8, 8, 8, 0.6),
-    0 3px 0 rgba(255, 255, 255, 0.38),
-    0 8px 18px rgba(21, 40, 77, 0.18);
+    0 1px 0 rgba(255, 255, 255, 0.62),
+    0 0 14px rgba(255, 255, 255, 0.38),
+    0 10px 20px rgba(35, 58, 98, 0.12);
 }
 
 .hud {
