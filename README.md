@@ -10,8 +10,7 @@ Open the game here:
 ## Controls
 
 - `Space` or right mouse button: jump (double jump)
-- `F`: boost jump
-- `G`: big jump
+- `F`: big jump
 - `P`: perdeshka
 - `Shift` or `E`: nitro
 - `S`: stop

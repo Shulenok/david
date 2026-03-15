@@ -9,7 +9,6 @@
   const statusEl = document.getElementById("status");
   const boostBtn = document.getElementById("boost");
   const fartBtn = document.getElementById("fart");
-  const megaJumpBtn = document.getElementById("megaJump");
   const nitroBtn = document.getElementById("nitro");
   const stopBtn = document.getElementById("stop");
   const restartBtn = document.getElementById("restart");
@@ -818,10 +817,10 @@
       return;
     }
     if (!state.started) {
-      statusEl.textContent = "Space/Right Mouse jump x2, F boost jump, G big jump, P perdeshka, Shift/E nitro, S stop, R restart, M menu.";
+      statusEl.textContent = "Space/Right Mouse jump x2, F big jump, P perdeshka, Shift/E nitro, S stop, R restart, M menu.";
       return;
     }
-    statusEl.textContent = "Space/Right Mouse jump x2, F boost jump, G big jump, P perdeshka, Shift/E nitro, S stop, R restart, M menu.";
+    statusEl.textContent = "Space/Right Mouse jump x2, F big jump, P perdeshka, Shift/E nitro, S stop, R restart, M menu.";
   }
 
   function trackEasterKey(key) {
@@ -910,7 +909,7 @@
       statusEl.textContent = `Big jump recharge: ${state.megaJumpCooldown.toFixed(1)}s`;
       return;
     }
-    statusEl.textContent = "Space/Right Mouse jump x2, F boost jump, G big jump, P perdeshka, Shift/E nitro, S stop, R restart, M menu.";
+    statusEl.textContent = "Space/Right Mouse jump x2, F big jump, P perdeshka, Shift/E nitro, S stop, R restart, M menu.";
   }
 
   function spawnCloud() {
@@ -1239,9 +1238,6 @@
     } else if (key === "e" || key === "shift") {
       triggerNitro();
     } else if (event.code === "KeyF") {
-      if (!state.started) state.started = true;
-      triggerFartBoost();
-    } else if (event.code === "KeyG") {
       if (!state.started) state.started = true;
       triggerBigJump();
     } else if (event.code === "KeyP") {
@@ -2128,7 +2124,7 @@
     unlockAudio();
     if (state.menuVisible) return;
     if (!state.started && !state.gameOver) state.started = true;
-    triggerFartBoost();
+    triggerBigJump();
   });
 
   if (fartBtn) {
@@ -2137,15 +2133,6 @@
       if (state.menuVisible) return;
       if (!state.started && !state.gameOver) state.started = true;
       triggerFartJoke();
-    });
-  }
-
-  if (megaJumpBtn) {
-    megaJumpBtn.addEventListener("click", () => {
-      unlockAudio();
-      if (state.menuVisible) return;
-      if (!state.started && !state.gameOver) state.started = true;
-      triggerBigJump();
     });
   }
 
